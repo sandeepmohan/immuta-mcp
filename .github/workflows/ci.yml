@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Syntax check
+        run: uv run python -m py_compile immuta_queries.py mcp_server.py
+
+      - name: Import check
+        run: uv run python -c "import immuta_queries, mcp_server"
+        env:
+          IMMUTA_API_KEY: placeholder
+          IMMUTA_BASE_URL: https://immuta.example.com
+
+      - name: Helm lint
+        run: helm lint deploy/helm
+
+      - name: Helm template renders
+        run: |
+          helm template smoke deploy/helm \
+            --set immuta.baseUrl=https://immuta.example.com \
+            --set immuta.apiKey=placeholder \
+            --set mcp.bearerToken=placeholder \
+            --set ingress.enabled=true \
+            --set ingress.host=mcp.example.com > /dev/null

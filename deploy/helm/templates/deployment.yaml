@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "immuta-mcp.fullname" . }}
+  labels:
+    {{- include "immuta-mcp.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      {{- include "immuta-mcp.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "immuta-mcp.selectorLabels" . | nindent 8 }}
+    spec:
+      # No custom ServiceAccount/RBAC: the app makes no Kubernetes API calls
+      # (audit reads Immuta's ES over HTTP). Pin `default` explicitly so the
+      # upgrade path from a chart version that DID create a named SA self-heals
+      # — Helm's 3-way merge won't strip a stale serviceAccountName otherwise,
+      # and the dangling reference makes every new pod FailedCreate. The pod
+      # needs no token either.
+      serviceAccountName: default
+      automountServiceAccountToken: false
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: mcp
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: ["--transport", "http", "--host", "0.0.0.0", "--port", "8080"]
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          env:
+            - name: IMMUTA_BASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "immuta-mcp.fullname" . }}
+                  key: IMMUTA_BASE_URL
+            - name: IMMUTA_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "immuta-mcp.apiKeySecretName" . }}
+                  key: IMMUTA_API_KEY
+            - name: MCP_BEARER_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "immuta-mcp.bearerSecretName" . }}
+                  key: MCP_BEARER_TOKEN
+          livenessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 20
+          readinessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 2
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          securityContext:
+            {{- toYaml .Values.containerSecurityContext | nindent 12 }}

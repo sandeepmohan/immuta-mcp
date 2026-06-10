@@ -1,0 +1,22 @@
+.git
+.gitignore
+.venv
+__pycache__
+*.pyc
+.env
+.DS_Store
+
+# Claude Code / agent context — not runtime artifacts
+.claude/
+CLAUDE.md
+
+# Docs / dev material — only the runtime needs immuta_queries.py + mcp_server.py
+*.md
+docs/
+tests/
+deploy/
+
+# Build outputs
+dist/
+build/
+*.egg-info/

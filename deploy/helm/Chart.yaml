@@ -1,0 +1,6 @@
+apiVersion: v2
+name: immuta-mcp
+description: MCP server exposing Immuta self-managed query tools to LLM clients.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

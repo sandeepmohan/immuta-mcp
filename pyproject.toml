@@ -1,0 +1,23 @@
+[project]
+name = "immuta-queries"
+version = "0.1.0"
+description = "Defensive Python toolkit for the Immuta self-managed 2026.1.4 API."
+requires-python = ">=3.11"
+dependencies = [
+    "httpx>=0.27",
+    "pydantic>=2.7",
+    "typer>=0.12",
+    "python-dotenv>=1.0",
+    "mcp>=1.2",
+    "uvicorn>=0.30",
+]
+
+[project.scripts]
+immuta-queries = "immuta_queries:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+only-include = ["immuta_queries.py"]

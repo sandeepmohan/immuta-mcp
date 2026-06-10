@@ -1,0 +1,58 @@
+image:
+  repository: immuta-mcp
+  tag: "0.5"
+  pullPolicy: IfNotPresent
+
+# Per-Immuta-instance config
+immuta:
+  baseUrl: "https://immuta.example.com"
+  # Provide ONE of:
+  #   apiKey: inline value (dev only, ends up in a chart-managed Secret)
+  #   existingSecret: name of a pre-created Secret with key IMMUTA_API_KEY
+  apiKey: ""
+  existingSecret: ""
+
+mcp:
+  # Provide ONE of:
+  #   bearerToken: inline value (dev only)
+  #   existingSecret: name of a pre-created Secret with key MCP_BEARER_TOKEN
+  bearerToken: ""
+  existingSecret: ""
+
+service:
+  type: ClusterIP
+  port: 8080
+
+ingress:
+  enabled: false
+  className: ""
+  host: ""
+  tls: false
+  tlsSecretName: ""
+  annotations: {}
+
+replicas: 1
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 10001
+  seccompProfile:
+    type: RuntimeDefault
+
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop: ["ALL"]
+
+# The audit tool reads Immuta's audit Elasticsearch store over HTTP
+# (POST /api/audit/rest/v1/search) using IMMUTA_API_KEY / IMMUTA_BASE_URL —
+# no Kubernetes access, ServiceAccount, or RBAC required.
